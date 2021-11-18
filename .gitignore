@@ -1,0 +1,9 @@
+.
+*pyc
+.idea
+.cache
+.mypy_cache
+.pytest_cache
+__pycache__
+.png
+.DS_Store
