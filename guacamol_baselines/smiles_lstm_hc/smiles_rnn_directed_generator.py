@@ -85,12 +85,11 @@ class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
                 starting_population = []
             else:
                 all_smiles = self.load_smiles_from_file(self.smi_file)
-                print("smiles loaded ... ,len. ?", len(all_smiles))
+                print(len(all_smiles) , " smiles loaded")
 
                 starting_population = self.top_k(
                     all_smiles, scoring_function_start, self.mols_to_sample
                 )
-                print("top k calculated")
 
         cuda_available = torch.cuda.is_available()
         device = "cuda" if cuda_available else "cpu"
@@ -117,7 +116,7 @@ class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
 
         database_name = database_name + "_" + str(i)
 
-        print("database : ", database_name)
+        print("Database in which molecules are stored : ", database_name)
 
 
         molecules = generator.optimise(

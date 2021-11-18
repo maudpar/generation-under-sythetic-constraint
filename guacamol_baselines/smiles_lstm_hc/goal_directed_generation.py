@@ -13,6 +13,70 @@ from guacamol.guacamol.assess_goal_directed_generation import (
 from guacamol.guacamol.utils.helpers import setup_default_logger
 from .smiles_rnn_directed_generator import SmilesRnnDirectedGenerator
 
+
+def goal_directed_generation(
+        suite,
+        synth_score,
+        n_epochs,
+        mols_to_sample: int = 1024,
+        keep_top: int = 512,
+        optimize_n_epochs: int = 2,
+        max_len: int = 100,
+        optimize_batch_size: int = 256,
+        number_final_samples: int = 0,
+        random_start: bool = False,
+        n_jobs: int = -1,
+        seed: int = 42,
+        output_file: str = None,
+        suffix_coll="",
+        smiles_file: str = None,
+        pretrained_model_path: str = None,
+):
+    if not os.getenv('MONGO_URL'):
+        raise Exception("No MONGO_URL environment variable was set")
+
+    if not os.getenv("DB_STORAGE"):
+        raise Exception("No DB_STORAGE environment variable was set")
+
+    if "pi3kmtor" in suite:
+        if pretrained_model_path is None:
+            pretrained_model_path = "guacamol_baselines/smiles_lstm_hc/pretrained_model/model_final_pi3kmtor.pt"
+        if smiles_file is None:
+            smiles_file = "pi3kmtor/pi3kmtor.smiles"
+
+    if pretrained_model_path is None:
+        pretrained_model_path = "guacamol_baselines/smiles_lstm_hc/pretrained_model/model_final_chembl.pt"
+
+    if smiles_file is None:
+        smiles_file = "guacamol_baselines/data/guacamol_v1_all.smiles"
+
+    if output_file is None:
+        output_file =  "guacamol_baselines/smiles_lstm_hc/results/goal_directed_results_" + suite+ ".json"
+
+    optimizer = SmilesRnnDirectedGenerator(
+        pretrained_model_path=pretrained_model_path,
+        n_epochs=n_epochs,
+        mols_to_sample=mols_to_sample,
+        keep_top=keep_top,
+        optimize_n_epochs=optimize_n_epochs,
+        max_len=max_len,
+        optimize_batch_size=optimize_batch_size,
+        number_final_samples=number_final_samples,
+        random_start=random_start,
+        smi_file=smiles_file,
+        n_jobs=n_jobs,
+        seed=seed,
+        synth_score=synth_score,
+        suffix_coll=suffix_coll,
+    )
+
+    assess_goal_directed_generation(
+        optimizer, json_output_file=output_file, benchmark_version=suite,
+        synth_score=synth_score
+    )
+
+
+
 if __name__ == "__main__":
     setup_default_logger()
 
@@ -95,7 +159,7 @@ if __name__ == "__main__":
         )
         args.smiles_file = "pi3kmtor/pi3kmtor.smiles"
 
-    else :
+    else:
         args.model_path = "guacamol_baselines/smiles_lstm_hc/pretrained_model/model_final_chembl.pt"
 
     if args.output_file is None:
@@ -106,23 +170,20 @@ if __name__ == "__main__":
         )
         args.output_file = json_file_path
 
-    optimizer = SmilesRnnDirectedGenerator(
-        pretrained_model_path=args.model_path,
-        n_epochs=args.n_epochs,
-        mols_to_sample=args.mols_to_sample,
-        keep_top=args.keep_top,
-        optimize_n_epochs=args.optimize_n_epochs,
-        max_len=args.max_len,
-        optimize_batch_size=args.optimize_batch_size,
-        number_final_samples=args.benchmark_num_samples,
-        random_start=args.random_start,
-        smi_file=args.smiles_file,
-        n_jobs=args.n_jobs,
-        seed=args.seed,
-        synth_score=args.synth_score,
-        suffix_coll=args.suffix_coll
-    )
-    assess_goal_directed_generation(
-        optimizer, json_output_file=args.output_file, benchmark_version=args.suite,
-        synth_score=args.synth_score
-    )
+
+    goal_directed_generation(suite=args.suite,
+                             synth_score=args.synth_score,
+                             n_epochs=args.n_epochs,
+                             mols_to_sample=args.mols_to_sample,
+                             keep_top=args.keep_top,
+                             optimize_n_epochs = args.optimize_n_epochs,
+                             max_len=args.max_len,
+                             optimize_batch_size=args.optimize_batch_size,
+                             random_start=args.random_start,
+                             n_jobs= args.n_jobs,
+                             seed=args.seed,
+                             output_file=args.output_file,
+                             suffix_coll=args.suffix_coll,
+                             smiles_file=args.smiles_file,
+                             pretrained_model_path=args.model_path,
+                             )
